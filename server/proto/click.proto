@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package clickrace;
+option go_package = "server/proto;proto";
+
+import "google/protobuf/empty.proto";
+
+// Client sends clicks
+message Click {
+  string player = 1;
+  int32 amount = 2;
+}
+
+// Leaderboard entry
+message Score {
+  string player = 1;
+  int32 score = 2;
+}
+
+// Stream of scores
+message Leaderboard {
+  repeated Score scores = 1;
+}
+
+service ClickRace {
+  // Player sends clicks (client stream → single response)
+  rpc SendClicks(stream Click) returns (Score);
+
+  // All players subscribe to leaderboard (server stream)
+  rpc GetLeaderboard(google.protobuf.Empty) returns (stream Leaderboard);
+}
