@@ -1,31 +1,69 @@
 syntax = "proto3";
 
-package clickrace;
+package monsterslayer;
 option go_package = "server/proto;proto";
 
 import "google/protobuf/empty.proto";
 
-// Client sends clicks
-message Click {
-  string player = 1;
-  int32 amount = 2;
+// Player joins the game
+message JoinGameRequest {
+  string player_name = 1;
 }
 
-// Leaderboard entry
-message Score {
-  string player = 1;
-  int32 score = 2;
+// Player data
+message Player {
+  string name = 1;
+  int32 total_clicks = 2;
+  repeated string loot_collected = 3;
+  int32 level = 4;
+  int32 experience = 5;
+  int64 last_played = 6; // Unix timestamp
 }
 
-// Stream of scores
-message Leaderboard {
-  repeated Score scores = 1;
+// Monster state
+message Monster {
+  string name = 1;
+  int32 max_health = 2;
+  int32 current_health = 3;
+  int32 level = 4;
+  repeated string loot_table = 5;
+  int64 last_updated = 6; // Unix timestamp
 }
 
-service ClickRace {
-  // Player sends clicks (client stream → single response)
-  rpc SendClicks(stream Click) returns (Score);
+// Player attacks monster
+message AttackRequest {
+  string player_name = 1;
+  int32 damage = 2;
+}
 
-  // All players subscribe to leaderboard (server stream)
-  rpc GetLeaderboard(google.protobuf.Empty) returns (stream Leaderboard);
+// Attack response
+message AttackResponse {
+  Player player = 1;
+  Monster monster = 2;
+  bool monster_defeated = 3;
+  string loot_gained = 4;
+}
+
+// Game state update
+message GameUpdate {
+  Monster monster = 1;
+  repeated Player players = 2;
+  int64 timestamp = 3;
+}
+
+// Join game response
+message JoinGameResponse {
+  Player player = 1;
+  Monster monster = 2;
+}
+
+service MonsterSlayer {
+  // Join the game
+  rpc JoinGame(JoinGameRequest) returns (JoinGameResponse);
+  
+  // Attack the monster
+  rpc AttackMonster(AttackRequest) returns (AttackResponse);
+  
+  // Stream game updates (real-time leaderboard, monster health, etc.)
+  rpc StreamGameUpdates(google.protobuf.Empty) returns (stream GameUpdate);
 }

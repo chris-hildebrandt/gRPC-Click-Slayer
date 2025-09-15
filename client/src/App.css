@@ -1,42 +1,258 @@
-#root {
-  max-width: 1280px;
+.app {
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.join-screen {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  color: white;
+  margin: 2rem 0;
+}
+
+.join-screen h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.join-form {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.join-form input {
+  padding: 1rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  min-width: 300px;
+}
+
+.join-form button {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 10px;
+  background: #ff6b6b;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.join-form button:hover:not(:disabled) {
+  background: #ff5252;
+}
+
+.join-form button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.connection-status {
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  background: #e9ecef;
+}
+
+.game-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.monster-section, .player-section, .leaderboard-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border: 2px solid #e9ecef;
+}
+
+.monster-section {
+  grid-column: 1 / -1;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.monster-health {
+  margin: 1rem 0;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.health-bar {
+  width: 100%;
+  height: 30px;
+  background: #e9ecef;
+  border-radius: 15px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.health-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6b6b, #ff8e8e);
+  transition: width 0.3s ease;
+}
+
+.health-text {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.monster-level {
+  font-size: 1.1rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.player-stats {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.click-button {
+  width: 100%;
+  padding: 1.5rem;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 1rem;
+}
+
+.click-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(255, 107, 107, 0.3);
+}
+
+.click-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.leaderboard-section {
+  grid-column: 1 / -1;
+}
+
+.leaderboard {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.leaderboard-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  align-items: center;
+}
+
+.leaderboard-item.current-player {
+  background: #e3f2fd;
+  border: 2px solid #2196f3;
+}
+
+.rank {
+  font-weight: bold;
+  color: #666;
+}
+
+.name {
+  font-weight: bold;
+}
+
+.clicks {
+  color: #666;
+}
+
+.level {
+  background: #2196f3;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.tech-info {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.tech-info p {
+  margin: 0.5rem 0;
+}
+
+.grpc-info {
+  grid-column: 1 / -1;
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 10px;
+  border: 2px solid #e9ecef;
+  margin-top: 1rem;
+}
+
+.grpc-info h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.grpc-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.grpc-info li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.grpc-info li:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 768px) {
+  .game-container {
+    grid-template-columns: 1fr;
   }
-  to {
-    transform: rotate(360deg);
+  
+  .join-form {
+    flex-direction: column;
+    align-items: center;
   }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  
+  .join-form input {
+    min-width: auto;
+    width: 100%;
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }

@@ -1,15 +1,12 @@
 # -----------------------------
-# Monster Slayer dev commands
+# gRPC Monster Slayer dev commands
 # -----------------------------
 
 # Go server port
 SERVER_PORT=50051
 
 # Envoy port
-ENVOY_PORT=8080
-
-# Envoy image version
-ENVOY_IMAGE=envoyproxy/envoy:v1.29-latest
+ENVOY_PORT=8081
 
 # Proto generation
 proto:
@@ -19,23 +16,22 @@ proto:
 	  -I=server/proto -I/usr/local/include \
 	  server/proto/click.proto
 
-# Start Go server
+# Start Go gRPC server
 server:
-	go run server/main.go
+	cd server && go run main.go
 
-# Start Envoy (if not running)
-envoy:
-	@if [ $$(docker ps -q -f name=monsterslayer-envoy) ]; then \
-		echo "Envoy already running"; \
-	else \
-		echo "Starting Envoy..."; \
-		docker run -d --name monsterslayer-envoy -p $(ENVOY_PORT):8080 \
-		-v $(PWD)/envoy.yaml:/etc/envoy/envoy.yaml $(ENVOY_IMAGE); \
-	fi
+# Start React client
+client:
+	cd client && npm install && npm run dev
 
-# Stop Envoy
-stop-envoy:
-	docker stop monsterslayer-envoy && docker rm monsterslayer-envoy || true
+# Install dependencies
+deps:
+	cd server && go mod tidy
+	cd client && npm install
 
-# Run everything for development
-dev: envoy server
+# Clean up
+clean:
+	rm -f server/players.json
+	rm -rf client/node_modules
+	rm -rf client/dist
+	rm -rf client/src/grpc/*.js

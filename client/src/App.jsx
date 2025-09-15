@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ClickRaceClient } from "./grpc/click_grpc_web_pb";
 import { Click, Empty } from "./grpc/click_pb";
 
-const client = new ClickRaceClient("http://localhost:8080"); // envoy proxy later
+const client = new ClickRaceClient("http://localhost:8081");
 
 function App() {
   const [name, setName] = useState("Player1");
