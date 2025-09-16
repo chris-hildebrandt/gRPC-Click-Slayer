@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
-// Import gRPC-Web (we'll need to install grpc-web package)
+// Import gRPC-Web generated clients/messages
 const grpc = require('grpc-web');
 const { MonsterSlayerClient } = require('./grpc/monster_slayer_grpc_web_pb');
-const { 
-  JoinGameRequest, 
-  AttackRequest, 
-  Empty 
+const {
+  JoinGameRequest,
+  AttackRequest,
+  GameUpdate,
 } = require('./grpc/monster_slayer_pb');
+const { Empty } = require('google-protobuf/google/protobuf/empty_pb.js');
 
 function GrpcApp() {
   const [playerName, setPlayerName] = useState('');
@@ -24,80 +25,76 @@ function GrpcApp() {
 
   // Initialize gRPC client
   useEffect(() => {
-    // Note: In a real app, you'd need to set up Envoy proxy
-    // For now, we'll use a simple HTTP approach
-    console.log('gRPC client would be initialized here');
+    const client = new MonsterSlayerClient('http://localhost:8081', null, null);
+    clientRef.current = client;
   }, []);
 
   const joinGame = async () => {
     if (!playerName.trim()) return;
-    
+
     try {
-      // For now, simulate gRPC call with fetch
-      // In real implementation, this would be:
-      // const request = new JoinGameRequest();
-      // request.setPlayerName(playerName);
-      // const response = await clientRef.current.joinGame(request, {});
-      
-      const response = await fetch('http://localhost:50051/join', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ player_name: playerName }),
+      const request = new JoinGameRequest();
+      request.setPlayerName(playerName);
+
+      clientRef.current.joinGame(request, {}, (err, resp) => {
+        if (err) {
+          console.error('JoinGame error:', err);
+          alert('Failed to join game. Make sure Envoy and server are running.');
+          return;
+        }
+        const playerObj = resp.getPlayer().toObject();
+        const monsterObj = resp.getMonster().toObject();
+        setPlayer(playerObj);
+        setMonster(monsterObj);
+        setIsJoined(true);
+        setIsConnected(true);
+
+        // start streaming updates
+        const empty = new Empty();
+        const stream = clientRef.current.streamGameUpdates(empty, {});
+        streamRef.current = stream;
+        stream.on('data', (update) => {
+          const u = update.toObject();
+          setMonster(u.monster);
+          setPlayers(u.playersList || []);
+        });
+        stream.on('error', (e) => {
+          console.error('Stream error:', e);
+          setIsConnected(false);
+        });
+        stream.on('end', () => {
+          setIsConnected(false);
+        });
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to join game');
-      }
-      
-      const data = await response.json();
-      setPlayer(data.player);
-      setMonster(data.monster);
-      setIsJoined(true);
-      setIsConnected(true);
     } catch (error) {
       console.error('Error joining game:', error);
-      alert('Failed to join game. Make sure the server is running.');
+      alert('Failed to join game. Make sure Envoy and server are running.');
     }
   };
 
   const attackMonster = async () => {
     if (!player || !monster) return;
-    
+
     const damage = 10; // Base damage per click
     setClickCount(prev => prev + 1);
-    
+
     try {
-      // For now, simulate gRPC call with fetch
-      // In real implementation, this would be:
-      // const request = new AttackRequest();
-      // request.setPlayerName(player.name);
-      // request.setDamage(damage);
-      // const response = await clientRef.current.attackMonster(request, {});
-      
-      const response = await fetch('http://localhost:50051/attack', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          player_name: player.name, 
-          damage: damage 
-        }),
+      const request = new AttackRequest();
+      request.setPlayerName(player.name);
+      request.setDamage(damage);
+
+      clientRef.current.attackMonster(request, {}, (err, resp) => {
+        if (err) {
+          console.error('AttackMonster error:', err);
+          return;
+        }
+        const data = resp.toObject();
+        setPlayer(data.player);
+        setMonster(data.monster);
+        if (data.monsterDefeated) {
+          alert('🎉 Monster defeated! You got loot: ' + data.lootGained);
+        }
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to attack monster');
-      }
-      
-      const data = await response.json();
-      setPlayer(data.player);
-      setMonster(data.monster);
-      
-      if (data.monster_defeated) {
-        alert('🎉 Monster defeated! You got loot: ' + data.loot_gained);
-      }
     } catch (error) {
       console.error('Error attacking monster:', error);
     }
@@ -109,7 +106,7 @@ function GrpcApp() {
   };
 
   const getSortedPlayers = () => {
-    return players.sort((a, b) => b.total_clicks - a.total_clicks);
+    return [...players].sort((a, b) => (b.totalClicks || 0) - (a.totalClicks || 0));
   };
 
   if (!isJoined) {
@@ -160,7 +157,7 @@ function GrpcApp() {
               ></div>
             </div>
             <div className="health-text">
-              {monster?.current_health} / {monster?.max_health} HP
+              {monster?.currentHealth} / {monster?.maxHealth} HP
             </div>
           </div>
           <div className="monster-level">Level {monster?.level}</div>
@@ -171,10 +168,10 @@ function GrpcApp() {
           <h2>Your Stats</h2>
           <div className="player-stats">
             <div>Name: {player?.name}</div>
-            <div>Total Clicks: {player?.total_clicks}</div>
+            <div>Total Clicks: {player?.totalClicks}</div>
             <div>Level: {player?.level}</div>
             <div>Experience: {player?.experience}</div>
-            <div>Loot: {player?.loot_collected?.join(', ') || 'None'}</div>
+            <div>Loot: {(player?.lootCollected || []).join(', ') || 'None'}</div>
           </div>
           
           <button 
@@ -194,7 +191,7 @@ function GrpcApp() {
               <div key={p.name} className={`leaderboard-item ${p.name === player?.name ? 'current-player' : ''}`}>
                 <span className="rank">#{index + 1}</span>
                 <span className="name">{p.name}</span>
-                <span className="clicks">{p.total_clicks} clicks</span>
+                <span className="clicks">{p.totalClicks} clicks</span>
                 <span className="level">Lv.{p.level}</span>
               </div>
             ))}

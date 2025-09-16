@@ -12,6 +12,8 @@ import (
 	pb "grpc-click-slayer/server/proto"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -120,7 +122,7 @@ func (gs *gameServer) AttackMonster(ctx context.Context, req *pb.AttackRequest) 
 
 	player, exists := gs.players[req.PlayerName]
 	if !exists {
-		return nil, grpc.Errorf(grpc.Code(grpc.NotFound), "Player not found")
+		return nil, status.Errorf(codes.NotFound, "Player not found")
 	}
 
 	// Update player stats

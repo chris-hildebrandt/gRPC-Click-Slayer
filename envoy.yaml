@@ -15,32 +15,53 @@ static_resources:
             - name: backend
               domains: ["*"]
               routes:
+              # Main gRPC and gRPC-Web traffic
               - match: { prefix: "/" }
                 route: { cluster: backend }
-              cors:
-                allow_origin_string_match:
-                - safe_regex:
-                    google_re2: {}
-                    regex: ".*"
-                allow_methods: "GET, PUT, DELETE, POST, OPTIONS"
-                allow_headers: "keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,custom-header-1,x-accept-content-transfer-encoding,x-accept-response-streaming,x-user-agent,x-grpc-web,grpc-timeout,authorization"
-                expose_headers: "custom-header-1,grpc-status,grpc-message"
-                max_age: "1728000"
-                allow_credentials: true
+                typed_per_filter_config:
+                  envoy.filters.http.cors:
+                    "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.CorsPolicy
+                    allow_origin_string_match:
+                    - safe_regex:
+                        regex: ".*"
+                        google_re2: {}
+                    allow_methods: "GET, PUT, DELETE, POST, OPTIONS"
+                    allow_headers: >-
+                      keep-alive,user-agent,cache-control,content-type,
+                      content-transfer-encoding,custom-header-1,
+                      x-accept-content-transfer-encoding,
+                      x-accept-response-streaming,
+                      x-user-agent,x-grpc-web,grpc-timeout,authorization
+                    expose_headers: "custom-header-1,grpc-status,grpc-message"
+                    max_age: "1728000"
+                    allow_credentials: true
+              # Preflight OPTIONS requests
+              - match:
+                  prefix: "/"
+                  headers:
+                  - name: ":method"
+                    exact_match: "OPTIONS"
+                direct_response:
+                  status: 200
           http_filters:
           - name: envoy.filters.http.grpc_web
           - name: envoy.filters.http.cors
           - name: envoy.filters.http.router
+
   clusters:
   - name: backend
     connect_timeout: 0.25s
     type: logical_dns
     lb_policy: round_robin
-    http2_protocol_options: {}
+    typed_extension_protocol_options:
+      envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+        "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+        explicit_http_config:
+          http2_protocol_options: {}
     load_assignment:
       cluster_name: backend
       endpoints:
       - lb_endpoints:
         - endpoint:
             address:
-              socket_address: { address: server, port_value: 50051 }
+              socket_address: { address: 127.0.0.1, port_value: 50051 }
